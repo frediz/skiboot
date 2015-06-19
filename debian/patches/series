@@ -1,1 +1,3 @@
 0001-external-gard-add-Makefile-targets-to-make-debian-pa.patch
+honor-compilation-flags-from-env
+fix-for-Werror

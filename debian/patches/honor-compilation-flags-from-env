@@ -1,0 +1,34 @@
+Description: Fix lintian hardening-no-fortify-functions
+ Just adding the environment variable CPPFLAGS to the one in the Makefiles
+
+--- a/external/opal-prd/Makefile
++++ b/external/opal-prd/Makefile
+@@ -1,9 +1,9 @@
+ CC = $(CROSS_COMPILE)gcc
+ 
+-CFLAGS = -m64 -Werror -Wall -g2 -ggdb
+-LDFLAGS = -m64
++CFLAGS += -m64 -Werror -Wall -g2 -ggdb
++LDFLAGS += -m64
+ ASFLAGS = -m64
+-CPPFLAGS = -I. -I../../include -I../../
++CPPFLAGS += -I. -I../../include -I../../
+ 
+ prefix = /usr/local/
+ sbindir = $(prefix)/sbin
+--- a/external/gard/Makefile
++++ b/external/gard/Makefile
+@@ -4,10 +4,10 @@
+ sbindir = $(prefix)/sbin
+ 
+ CC = $(CROSS_COMPILE)gcc
+-CFLAGS = -m64 -Werror -Wall -g2 -ggdb
+-LDFLAGS = -m64
++CFLAGS += -m64 -Werror -Wall -g2 -ggdb
++LDFLAGS += -m64
+ ASFLAGS = -m64
+-CPPFLAGS = -I. -I../../
++CPPFLAGS += -I. -I../../
+ 
+ OBJS = file_flash.o gard.o libflash.o libffs.o ecc.o
+ 
