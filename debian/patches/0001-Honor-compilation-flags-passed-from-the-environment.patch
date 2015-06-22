@@ -1,0 +1,50 @@
+From 11df06f7d80a3ae36a1fa5f157deba24bf5e460d Mon Sep 17 00:00:00 2001
+From: Frederic Bonnard <frediz@linux.vnet.ibm.com>
+Date: Fri, 19 Jun 2015 13:38:26 +0200
+Subject: [PATCH] Honor compilation flags passed from the environment
+
+Adding the environment variables CFLAGS, CPPFLAGS and LDFLAGS to the one in the
+Makefiles. Debian/Ubuntu use this mechanism to do hardened builds.
+---
+ external/gard/Makefile     | 6 +++---
+ external/opal-prd/Makefile | 6 +++---
+ 2 files changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/external/gard/Makefile b/external/gard/Makefile
+index 4f0400e..de940ee 100644
+--- a/external/gard/Makefile
++++ b/external/gard/Makefile
+@@ -4,10 +4,10 @@ prefix = /usr/local/
+ sbindir = $(prefix)/sbin
+ 
+ CC = $(CROSS_COMPILE)gcc
+-CFLAGS = -m64 -Werror -Wall -g2 -ggdb
+-LDFLAGS = -m64
++CFLAGS += -m64 -Werror -Wall -g2 -ggdb
++LDFLAGS += -m64
+ ASFLAGS = -m64
+-CPPFLAGS = -I. -I../../
++CPPFLAGS += -I. -I../../
+ 
+ OBJS = file_flash.o gard.o libflash.o libffs.o ecc.o
+ 
+diff --git a/external/opal-prd/Makefile b/external/opal-prd/Makefile
+index 433ab71..fa5872a 100644
+--- a/external/opal-prd/Makefile
++++ b/external/opal-prd/Makefile
+@@ -1,9 +1,9 @@
+ CC = $(CROSS_COMPILE)gcc
+ 
+-CFLAGS = -m64 -Werror -Wall -g2 -ggdb
+-LDFLAGS = -m64
++CFLAGS += -m64 -Werror -Wall -g2 -ggdb
++LDFLAGS += -m64
+ ASFLAGS = -m64
+-CPPFLAGS = -I. -I../../include -I../../
++CPPFLAGS += -I. -I../../include -I../../
+ 
+ prefix = /usr/local/
+ sbindir = $(prefix)/sbin
+-- 
+2.1.4
+

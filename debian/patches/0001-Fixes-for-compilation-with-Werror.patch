@@ -1,0 +1,130 @@
+From 1c2fa1b2389c8d4b4b853fc76223cc843025ac7c Mon Sep 17 00:00:00 2001
+From: Frederic Bonnard <frediz@linux.vnet.ibm.com>
+Date: Fri, 19 Jun 2015 13:43:45 +0200
+Subject: [PATCH] Fixes for compilation with -Werror
+
+On Debian/Ubuntu, additionnal compilation flags are added such as -Werror which make
+compilation fail. So :
+- checking function return codes so that the compilation doesn't fail.
+- moving 'largest' variable so that gcc always sees it with a value.
+---
+ external/gard/gard.c         |  4 +---
+ external/opal-prd/opal-prd.c | 32 +++++++++++++++++++++++++++-----
+ external/opal-prd/pnor.c     | 14 ++++++++++++--
+ 3 files changed, 40 insertions(+), 10 deletions(-)
+
+diff --git a/external/gard/gard.c b/external/gard/gard.c
+index c43e05a..93a1c07 100644
+--- a/external/gard/gard.c
++++ b/external/gard/gard.c
+@@ -511,7 +511,7 @@ static int do_show(struct gard_ctx *ctx, int argc, char **argv)
+ 
+ static int do_clear_i(struct gard_ctx *ctx, int pos, struct gard_record *gard, void *priv)
+ {
+-	int largest, rc = 0;
++	int largest = 0, rc = 0;
+ 	char *buf;
+ 	struct gard_record null_gard;
+ 
+@@ -533,8 +533,6 @@ static int do_clear_i(struct gard_ctx *ctx, int pos, struct gard_record *gard, v
+ 			return rc;
+ 		}
+ 		printf("done\n");
+-
+-		largest = 0;
+ 	} else if (be32toh(gard->record_id) == *(uint32_t *)priv) {
+ 		largest = get_largest_pos(ctx);
+ 		if (largest < 0 || pos > largest) {
+diff --git a/external/opal-prd/opal-prd.c b/external/opal-prd/opal-prd.c
+index bf8f2ae..9f686c5 100644
+--- a/external/opal-prd/opal-prd.c
++++ b/external/opal-prd/opal-prd.c
+@@ -707,7 +707,12 @@ static void dump_hbrt_map(struct opal_prd_ctx *ctx)
+ 		return;
+ 	}
+ 
+-	ftruncate(fd, 0);
++	rc = ftruncate(fd, 0);
++	if (rc < 0) {
++		pr_log(LOG_NOTICE, "IMAGE: couldn't truncate image %s for writing",
++				dump_name);
++		return;
++	}
+ 	rc = write(fd, ctx->code_addr, ctx->code_size);
+ 	close(fd);
+ 
+@@ -772,8 +777,18 @@ static int prd_init_one_range(struct opal_prd_ctx *ctx, const char *path,
+ 	__be64 *reg;
+ 	void *buf;
+ 
+-	asprintf(&label_path, "%s/%s/ibm,prd-label", path, dirent->d_name);
+-	asprintf(&reg_path, "%s/%s/reg", path, dirent->d_name);
++	rc = asprintf(&label_path, "%s/%s/ibm,prd-label", path, dirent->d_name);
++	if (rc < 0) {
++		pr_log(LOG_ERR, "FW: error creating 'ibm,prd-label' path "
++				"node: %m");
++		return -1;
++	}
++	rc = asprintf(&reg_path, "%s/%s/reg", path, dirent->d_name);
++	if (rc < 0) {
++		pr_log(LOG_ERR, "FW: error creating 'reg' path "
++				" node: %m");
++		return -1;
++	}
+ 
+ 	reg = NULL;
+ 	label = NULL;
+@@ -823,9 +838,16 @@ static int prd_init_ranges(struct opal_prd_ctx *ctx)
+ 	struct dirent *dirent;
+ 	char *path;
+ 	DIR *dir;
+-	int rc = -1;
++	int rc;
+ 
+-	asprintf(&path, "%s/reserved-memory", devicetree_base);
++	rc = asprintf(&path, "%s/reserved-memory", devicetree_base);
++	if (rc < 0) {
++		pr_log(LOG_ERR, "FW: error creating 'reserved-memory' path "
++				"node: %m");
++		return -1;
++	}
++
++	rc = -1;
+ 
+ 	dir = opendir(path);
+ 	if (!dir) {
+diff --git a/external/opal-prd/pnor.c b/external/opal-prd/pnor.c
+index 95a4aa5..43814ab 100644
+--- a/external/opal-prd/pnor.c
++++ b/external/opal-prd/pnor.c
+@@ -139,7 +139,12 @@ static int mtd_write(struct pnor *pnor, int fd, void *data, uint64_t offset,
+ 			goto out;
+ 		}
+ 
+-		read(fd, buf, pnor->erasesize);
++		rc = read(fd, buf, pnor->erasesize);
++		if (rc < 0) {
++			pr_log(LOG_ERR, "PNOR: read(0x%x bytes) failed: %m",
++					pnor->erasesize);
++			goto out;
++		}
+ 	}
+ 
+ 	if (end_waste)  {
+@@ -154,7 +159,12 @@ static int mtd_write(struct pnor *pnor, int fd, void *data, uint64_t offset,
+ 			goto out;
+ 		}
+ 
+-		read(fd, buf + write_len - pnor->erasesize, pnor->erasesize);
++		rc = read(fd, buf + write_len - pnor->erasesize, pnor->erasesize);
++		if (rc < 0) {
++			pr_log(LOG_ERR, "PNOR: read(0x%x bytes) failed: %m",
++					pnor->erasesize);
++			goto out;
++		}
+ 	}
+ 
+ 	/* Put data in the correct spot */
+-- 
+2.1.4
+

@@ -5,7 +5,7 @@
 export DH_VERBOSE=1
 
 %:
-	dh $@ 
+	dh $@ --with systemd
 
 override_dh_auto_build:
 	make -C external/opal-prd/
@@ -14,3 +14,9 @@ override_dh_auto_build:
 override_dh_auto_install:
 	make -C external/opal-prd/ prefix=/usr DESTDIR=../../debian/tmp/ install
 	make -C external/gard/ prefix=/usr DESTDIR=../../debian/tmp/ install
+
+override_dh_auto_clean:
+	make -C external/opal-prd/ clean
+	make -C external/gard/ clean
+	rm -f external/opal-prd/ccan
+	dh_auto_clean
