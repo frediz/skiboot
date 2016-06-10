@@ -1636,7 +1636,7 @@ static int run_prd_daemon(struct opal_prd_ctx *ctx)
 	pr_debug("HBRT: calling hservices_init");
 	rc = hservices_init(ctx, ctx->code_addr);
 	if (rc) {
-		pr_log(LOG_ERR, "HBRT: Can't initiliase HBRT");
+		pr_log(LOG_ERR, "HBRT: Can't initialise HBRT");
 		goto out_close;
 	}
 	pr_debug("HBRT: hservices_init done");
